@@ -1,7 +1,6 @@
 import { getClientConfig } from "../config/client";
 import {
   ACCESS_CODE_PREFIX,
-  Azure,
   ModelProvider,
   ServiceProvider,
 } from "../constant";
@@ -9,6 +8,8 @@ import { ChatMessage, ModelType, useAccessStore, useChatStore } from "../store";
 import { ChatGPTApi } from "./platforms/openai";
 import { GeminiProApi } from "./platforms/google";
 import { ClaudeApi } from "./platforms/anthropic";
+import { createDidHeaders, createCredentialFromDid } from "../utils/did";
+
 export const ROLES = ["system", "user", "assistant"] as const;
 export type MessageRole = (typeof ROLES)[number];
 
@@ -171,6 +172,16 @@ export function getHeaders() {
   const clientConfig = getClientConfig();
   const makeBearer = (s: string) => `${isAzure ? "" : "Bearer "}${s.trim()}`;
   const validString = (x: string) => x && x.length > 0;
+
+  // Check if using DID authentication
+  if (accessStore.authMethod === "did" && accessStore.didCredential) {
+    const credential = createCredentialFromDid(accessStore.didCredential);
+    if (credential) {
+      const didHeaders = createDidHeaders(credential);
+      Object.assign(headers, didHeaders);
+      return headers;
+    }
+  }
 
   // when using google api in app, not set auth header
   if (!(isGoogle && clientConfig?.isApp)) {

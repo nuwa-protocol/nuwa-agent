@@ -42,6 +42,10 @@ const DEFAULT_ACCESS_STATE = {
   anthropicApiVersion: "2023-06-01",
   anthropicUrl: "",
 
+  // DID authentication
+  didCredential: "",
+  authMethod: "traditional" as "traditional" | "did",
+
   // server config
   needCode: true,
   hideUserApiKey: false,
@@ -78,15 +82,21 @@ export const useAccessStore = createPersistStore(
       return ensure(get(), ["anthropicApiKey"]);
     },
 
+    isValidDid() {
+      const state = get();
+      return state.didCredential && state.didCredential.startsWith("did:");
+    },
+
     isAuthorized() {
       this.fetch();
 
-      // has token or has code or disabled access control
+      // has token or has code or disabled access control or valid DID
       return (
         this.isValidOpenAI() ||
         this.isValidAzure() ||
         this.isValidGoogle() ||
         this.isValidAnthropic() ||
+        this.isValidDid() ||
         !this.enabledAccessControl() ||
         (this.enabledAccessControl() && ensure(get(), ["accessCode"]))
       );

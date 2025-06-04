@@ -19,6 +19,17 @@ const en: LocaleType = {
     Input: "access code",
     Confirm: "Confirm",
     Later: "Later",
+    Did: {
+      Title: "DID Authentication",
+      Tips: "Use Decentralized Identifier for authentication",
+      Input: "Please enter your DID (e.g., did:nuwa:example123)",
+      AuthMethod: "Authentication Method",
+      Traditional: "Traditional",
+      DidAuth: "DID Auth",
+      InvalidFormat: "Invalid DID format, please enter a valid DID",
+      Success: "DID authentication successful",
+      Failed: "DID authentication failed",
+    },
   },
   ChatItem: {
     ChatItemCount: (count: number) => `${count} messages`,

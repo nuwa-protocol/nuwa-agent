@@ -17,6 +17,17 @@ const cn = {
     Input: "在此处填写访问码",
     Confirm: "确认",
     Later: "稍后再说",
+    Did: {
+      Title: "DID 认证",
+      Tips: "使用去中心化身份标识符进行认证",
+      Input: "请输入您的 DID（如：did:nuwa:example123）",
+      AuthMethod: "认证方式",
+      Traditional: "传统认证",
+      DidAuth: "DID 认证",
+      InvalidFormat: "DID 格式无效，请输入正确的 DID",
+      Success: "DID 认证成功",
+      Failed: "DID 认证失败",
+    },
   },
   ChatItem: {
     ChatItemCount: (count: number) => `${count} 条对话`,

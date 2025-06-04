@@ -10,7 +10,7 @@ import { Path } from "@/app/constant";
 import { ErrorBoundary } from "@/app/components/error";
 import { getISOLang } from "@/app/locales";
 import { useSwitchTheme } from "@/app/hooks/useSwitchTheme";
-import { AuthPage } from "@/app/components/auth";
+import { AuthPage } from "@/app/containers/Auth";
 import { getClientConfig } from "@/app/config/client";
 import { useAccessStore, useAppConfig } from "@/app/store";
 import { useLoadData } from "@/app/hooks/useLoadData";
