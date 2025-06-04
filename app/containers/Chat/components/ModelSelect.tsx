@@ -1,5 +1,5 @@
 import Popover from "@/app/components/Popover";
-import React, { useMemo, useRef } from "react";
+import { useMemo, useRef, useState } from "react";
 import useRelativePosition, {
   Orientation,
 } from "@/app/hooks/useRelativePosition";
@@ -12,14 +12,14 @@ import BottomArrow from "@/app/icons/downArrowLgIcon.svg";
 import BottomArrowMobile from "@/app/icons/bottomArrow.svg";
 import Modal, { TriggerProps } from "@/app/components/Modal";
 
-import Selected from "@/app/icons/selectedIcon.svg";
-
 const ModelSelect = () => {
   const config = useAppConfig();
   const { isMobileScreen } = config;
   const chatStore = useChatStore();
   const currentModel = chatStore.currentSession().mask.modelConfig.model;
   const allModels = useAllModels();
+  const [searchTerm, setSearchTerm] = useState("");
+
   const models = useMemo(() => {
     const filteredModels = allModels.filter((m) => m.available);
     const defaultModel = filteredModels.find((m) => m.isDefault);
@@ -34,6 +34,15 @@ const ModelSelect = () => {
       return filteredModels;
     }
   }, [allModels]);
+
+  const filteredModels = useMemo(() => {
+    if (!searchTerm.trim()) return models;
+    return models.filter(
+      (model) =>
+        model.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        model.displayName?.toLowerCase().includes(searchTerm.toLowerCase()),
+    );
+  }, [models, searchTerm]);
 
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -66,12 +75,24 @@ const ModelSelect = () => {
     <div
       className={`flex flex-col gap-1 overflow-x-hidden  relative text-sm-title`}
     >
-      {models?.map((o) => (
+      <div
+        className="px-3 py-2 border-b border-gray-200 dark:border-gray-600"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <input
+          type="text"
+          placeholder="Search models..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          autoFocus
+        />
+      </div>
+      {filteredModels?.map((o) => (
         <div
           key={o.displayName}
           className={`flex  items-center px-3 py-2 gap-3 rounded-action-btn hover:bg-select-option-hovered  cursor-pointer`}
           onClick={() => {
-            close();
             chatStore.updateCurrentSession((session) => {
               session.mask.modelConfig.model = o.name as ModelType;
               session.mask.syncGlobalConfig = false;
@@ -80,14 +101,14 @@ const ModelSelect = () => {
           }}
           ref={currentModel === o.name ? selectedItemRef : undefined}
         >
-          <div className={`flex-1 text-text-select`}>{o.name}</div>
-          <div
-            className={currentModel === o.name ? "opacity-100" : "opacity-0"}
-          >
-            <Selected />
-          </div>
+          <div className={`flex-1 text-text-select`}>{o.displayName}</div>
         </div>
       ))}
+      {filteredModels?.length === 0 && searchTerm.trim() && (
+        <div className="px-3 py-4 text-center text-gray-500 dark:text-gray-400 text-sm">
+          No models found matching {`"${searchTerm}"`}
+        </div>
+      )}
     </div>
   );
 
