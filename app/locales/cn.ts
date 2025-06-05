@@ -19,7 +19,7 @@ const cn = {
   },
   Auth: {
     Return: "返回",
-    Title: "需要密码",
+    Title: "使用DID或传统方法验证身份",
     Tips: "管理员开启了密码验证，请在下方填入访问码",
     SubTips: "或者输入你的 OpenAI 或 Google AI 密钥",
     Input: "在此处填写访问码",
@@ -28,6 +28,17 @@ const cn = {
     SaasTips: "配置太麻烦，想要立即使用",
     TopTips:
       "🥳 NextChat AI 首发优惠，立刻解锁 OpenAI o1, GPT-4o, Claude-3.5 等最新大模型",
+    Did: {
+      Title: "DID 认证",
+      Tips: "使用去中心化身份标识符进行认证",
+      Input: "您的 DID（如：did:nuwa:example123）",
+      AuthMethod: "认证方式",
+      Traditional: "传统认证",
+      DidAuth: "DID 认证",
+      InvalidFormat: "DID 格式无效，请输入正确的 DID",
+      Success: "DID 认证成功",
+      Failed: "DID 认证失败",
+    },
   },
   ChatItem: {
     ChatItemCount: (count: number) => `${count} 条对话`,

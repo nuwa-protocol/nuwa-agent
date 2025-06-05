@@ -132,6 +132,10 @@ const DEFAULT_ACCESS_STATE = {
   siliconflowUrl: DEFAULT_SILICONFLOW_URL,
   siliconflowApiKey: "",
 
+  // DID authentication
+  didCredential: "",
+  authMethod: "did" as "did" | "traditional",
+
   // server config
   needCode: true,
   hideUserApiKey: false,
@@ -219,6 +223,13 @@ export const useAccessStore = createPersistStore(
       return ensure(get(), ["siliconflowApiKey"]);
     },
 
+    isValidDID() {
+      const state = get();
+      return (
+        state.didCredential === "did" && state.didCredential.startsWith("did:")
+      );
+    },
+
     isAuthorized() {
       this.fetch();
 
@@ -238,6 +249,7 @@ export const useAccessStore = createPersistStore(
         this.isValidXAI() ||
         this.isValidChatGLM() ||
         this.isValidSiliconFlow() ||
+        this.isValidDID() ||
         !this.enabledAccessControl() ||
         (this.enabledAccessControl() && ensure(get(), ["accessCode"]))
       );

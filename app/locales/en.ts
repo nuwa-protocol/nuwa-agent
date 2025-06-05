@@ -20,7 +20,7 @@ const en: LocaleType = {
   },
   Auth: {
     Return: "Return",
-    Title: "Need Access Code",
+    Title: "Authentication with DID or Traditional Methods",
     Tips: "Please enter access code below",
     SubTips: "Or enter your OpenAI or Google API Key",
     Input: "access code",
@@ -29,7 +29,19 @@ const en: LocaleType = {
     SaasTips: "Too Complex, Use Immediately Now",
     TopTips:
       "🥳 NextChat AI launch promotion: Instantly unlock the latest models like OpenAI o1, GPT-4o, Claude-3.5!",
+    Did: {
+      Title: "DID Authentication",
+      Tips: "Use Decentralized Identifier for authentication",
+      Input: "Your DID (e.g., did:nuwa:example123)",
+      AuthMethod: "Authentication Method",
+      Traditional: "Traditional",
+      DidAuth: "DID Auth",
+      InvalidFormat: "Invalid DID format, please enter a valid DID",
+      Success: "DID authentication successful",
+      Failed: "DID authentication failed",
+    },
   },
+
   ChatItem: {
     ChatItemCount: (count: number) => `${count} messages`,
   },

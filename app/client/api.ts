@@ -24,6 +24,7 @@ import { DeepSeekApi } from "./platforms/deepseek";
 import { XAIApi } from "./platforms/xai";
 import { ChatGLMApi } from "./platforms/glm";
 import { SiliconflowApi } from "./platforms/siliconflow";
+import { createDidHeaders, createCredentialFromDid } from "../utils/did";
 
 export const ROLES = ["system", "user", "assistant"] as const;
 export type MessageRole = (typeof ROLES)[number];
@@ -344,6 +345,16 @@ export function getHeaders(ignoreHeaders: boolean = false) {
     apiKey,
     isAzure || isAnthropic || isGoogle,
   );
+
+  // Check if using DID authentication
+  if (accessStore.authMethod === "did" && accessStore.didCredential) {
+    const credential = createCredentialFromDid(accessStore.didCredential);
+    if (credential) {
+      const didHeaders = createDidHeaders(credential);
+      Object.assign(headers, didHeaders);
+      return headers;
+    }
+  }
 
   if (bearerToken) {
     headers[authHeader] = bearerToken;
