@@ -1,189 +1,170 @@
-import styles from "./auth.module.scss";
-import { IconButton } from "./button";
-import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Path, SAAS_CHAT_URL } from "../constant";
-import { useAccessStore } from "../store";
-import Locale from "../locales";
-import Delete from "../icons/close.svg";
-import Arrow from "../icons/arrow.svg";
-import Logo from "../icons/logo.svg";
-import { useMobileScreen } from "@/app/utils";
-import BotIcon from "../icons/bot.svg";
-import { getClientConfig } from "../config/client";
-import { PasswordInput } from "./ui-lib";
-import LeftIcon from "@/app/icons/left.svg";
-import { safeLocalStorage } from "@/app/utils";
-import {
-  trackSettingsPageGuideToCPaymentClick,
-  trackAuthorizationPageButtonToCPaymentClick,
-} from "../utils/auth-settings-events";
-import clsx from "clsx";
+import { Path } from "@/app/constant";
+import { useAccessStore } from "@/app/store";
+import Locale from "@/app/locales";
+import BotIcon from "@/app/icons/bot.svg";
+import { useEffect, useState } from "react";
+import { getClientConfig } from "@/app/config/client";
+import { parseDid } from "@/app/utils/did";
 
-const storage = safeLocalStorage();
+import styles from "./auth.module.scss";
 
 export function AuthPage() {
   const navigate = useNavigate();
   const accessStore = useAccessStore();
+  const [didError, setDidError] = useState("");
+
   const goHome = () => navigate(Path.Home);
   const goChat = () => navigate(Path.Chat);
-  const goSaas = () => {
-    trackAuthorizationPageButtonToCPaymentClick();
-    window.location.href = SAAS_CHAT_URL;
-  };
-
   const resetAccessCode = () => {
     accessStore.update((access) => {
       access.openaiApiKey = "";
       access.accessCode = "";
+      access.didCredential = "";
     });
-  }; // Reset access code to empty string
+  };
+
+  const handleDidInput = (value: string) => {
+    accessStore.update((access) => {
+      access.didCredential = value;
+    });
+
+    // Validate DID format
+    if (value) {
+      const validation = parseDid(value);
+      if (!validation.isValid) {
+        setDidError(Locale.Auth.Did.InvalidFormat);
+      } else {
+        setDidError("");
+      }
+    } else {
+      setDidError("");
+    }
+  };
+
+  const switchAuthMethod = (method: "traditional" | "did") => {
+    accessStore.update((access) => {
+      access.authMethod = method;
+    });
+  };
 
   useEffect(() => {
     if (getClientConfig()?.isApp) {
       navigate(Path.Settings);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [navigate]);
 
   return (
     <div className={styles["auth-page"]}>
-      <TopBanner></TopBanner>
-      <div className={styles["auth-header"]}>
-        <IconButton
-          icon={<LeftIcon />}
-          text={Locale.Auth.Return}
-          onClick={() => navigate(Path.Home)}
-        ></IconButton>
-      </div>
-      <div className={clsx("no-dark", styles["auth-logo"])}>
+      {/* Logo */}
+      <div className={`no-dark ${styles["auth-logo"]}`}>
         <BotIcon />
       </div>
 
+      {/* Title */}
       <div className={styles["auth-title"]}>{Locale.Auth.Title}</div>
-      <div className={styles["auth-tips"]}>{Locale.Auth.Tips}</div>
 
-      <PasswordInput
-        style={{ marginTop: "3vh", marginBottom: "3vh" }}
-        aria={Locale.Settings.ShowPassword}
-        aria-label={Locale.Auth.Input}
-        value={accessStore.accessCode}
-        type="text"
-        placeholder={Locale.Auth.Input}
-        onChange={(e) => {
-          accessStore.update(
-            (access) => (access.accessCode = e.currentTarget.value),
-          );
-        }}
-      />
-
-      {!accessStore.hideUserApiKey ? (
-        <>
-          <div className={styles["auth-tips"]}>{Locale.Auth.SubTips}</div>
-          <PasswordInput
-            style={{ marginTop: "3vh", marginBottom: "3vh" }}
-            aria={Locale.Settings.ShowPassword}
-            aria-label={Locale.Settings.Access.OpenAI.ApiKey.Placeholder}
-            value={accessStore.openaiApiKey}
-            type="text"
-            placeholder={Locale.Settings.Access.OpenAI.ApiKey.Placeholder}
-            onChange={(e) => {
-              accessStore.update(
-                (access) => (access.openaiApiKey = e.currentTarget.value),
-              );
-            }}
-          />
-          <PasswordInput
-            style={{ marginTop: "3vh", marginBottom: "3vh" }}
-            aria={Locale.Settings.ShowPassword}
-            aria-label={Locale.Settings.Access.Google.ApiKey.Placeholder}
-            value={accessStore.googleApiKey}
-            type="text"
-            placeholder={Locale.Settings.Access.Google.ApiKey.Placeholder}
-            onChange={(e) => {
-              accessStore.update(
-                (access) => (access.googleApiKey = e.currentTarget.value),
-              );
-            }}
-          />
-        </>
-      ) : null}
-
-      <div className={styles["auth-actions"]}>
-        <IconButton
-          text={Locale.Auth.Confirm}
-          type="primary"
-          onClick={goChat}
-        />
-        <IconButton
-          text={Locale.Auth.SaasTips}
-          onClick={() => {
-            goSaas();
-          }}
-        />
-      </div>
-    </div>
-  );
-}
-
-function TopBanner() {
-  const [isHovered, setIsHovered] = useState(false);
-  const [isVisible, setIsVisible] = useState(true);
-  const isMobile = useMobileScreen();
-  useEffect(() => {
-    // 检查 localStorage 中是否有标记
-    const bannerDismissed = storage.getItem("bannerDismissed");
-    // 如果标记不存在，存储默认值并显示横幅
-    if (!bannerDismissed) {
-      storage.setItem("bannerDismissed", "false");
-      setIsVisible(true); // 显示横幅
-    } else if (bannerDismissed === "true") {
-      // 如果标记为 "true"，则隐藏横幅
-      setIsVisible(false);
-    }
-  }, []);
-
-  const handleMouseEnter = () => {
-    setIsHovered(true);
-  };
-
-  const handleMouseLeave = () => {
-    setIsHovered(false);
-  };
-
-  const handleClose = () => {
-    setIsVisible(false);
-    storage.setItem("bannerDismissed", "true");
-  };
-
-  if (!isVisible) {
-    return null;
-  }
-  return (
-    <div
-      className={styles["top-banner"]}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-    >
-      <div className={clsx(styles["top-banner-inner"], "no-dark")}>
-        <Logo className={styles["top-banner-logo"]}></Logo>
-        <span>
-          {Locale.Auth.TopTips}
-          <a
-            href={SAAS_CHAT_URL}
-            rel="stylesheet"
-            onClick={() => {
-              trackSettingsPageGuideToCPaymentClick();
-            }}
+      {/* Auth Method Selector */}
+      <div className={styles["auth-method-selector"]}>
+        <div className={styles["auth-method-label"]}>
+          {Locale.Auth.Did.AuthMethod}
+        </div>
+        <div className={styles["auth-method-buttons"]}>
+          <button
+            className={`${styles["auth-method-button"]} ${
+              accessStore.authMethod === "did" ? styles["active"] : ""
+            }`}
+            onClick={() => switchAuthMethod("did")}
           >
-            {Locale.Settings.Access.SaasStart.ChatNow}
-            <Arrow style={{ marginLeft: "4px" }} />
-          </a>
-        </span>
+            {Locale.Auth.Did.DidAuth}
+          </button>
+          <button
+            className={`${styles["auth-method-button"]} ${
+              accessStore.authMethod === "traditional" ? styles["active"] : ""
+            }`}
+            onClick={() => switchAuthMethod("traditional")}
+          >
+            {Locale.Auth.Did.Traditional}
+          </button>
+        </div>
       </div>
-      {(isHovered || isMobile) && (
-        <Delete className={styles["top-banner-close"]} onClick={handleClose} />
+
+      {/* Traditional Authentication Form */}
+      {accessStore.authMethod === "did" ? (
+        /* DID Authentication Form */
+        <div className={styles["auth-form"]}>
+          <div className={styles["auth-tips"]}>{Locale.Auth.Did.Tips}</div>
+          <input
+            className={styles["auth-input"]}
+            type="text"
+            placeholder={Locale.Auth.Did.Input}
+            value={accessStore.didCredential}
+            onChange={(e) => handleDidInput(e.currentTarget.value)}
+          />
+          {didError && <div className={styles["auth-error"]}>{didError}</div>}
+        </div>
+      ) : (
+        <div className={styles["auth-form"]}>
+          <div className={styles["auth-tips"]}>{Locale.Auth.Tips}</div>
+          <input
+            className={styles["auth-input"]}
+            type="password"
+            placeholder={Locale.Auth.Input}
+            value={accessStore.accessCode}
+            onChange={(e) => {
+              accessStore.update(
+                (access) => (access.accessCode = e.currentTarget.value),
+              );
+            }}
+          />
+          {!accessStore.hideUserApiKey && (
+            <>
+              <div className={styles["auth-tips"]}>{Locale.Auth.SubTips}</div>
+              <input
+                className={styles["auth-input-second"]}
+                type="password"
+                placeholder={Locale.Settings.Access.OpenAI.ApiKey.Placeholder}
+                value={accessStore.openaiApiKey}
+                onChange={(e) => {
+                  accessStore.update(
+                    (access) => (access.openaiApiKey = e.currentTarget.value),
+                  );
+                }}
+              />
+              <input
+                className={styles["auth-input-second"]}
+                type="password"
+                placeholder={Locale.Settings.Access.Google.ApiKey.Placeholder}
+                value={accessStore.googleApiKey}
+                onChange={(e) => {
+                  accessStore.update(
+                    (access) => (access.googleApiKey = e.currentTarget.value),
+                  );
+                }}
+              />
+            </>
+          )}
+        </div>
       )}
+
+      {/* Action Buttons */}
+      <div className={styles["auth-actions"]}>
+        <button
+          className={`${styles["auth-action-button"]} ${styles["auth-action-primary"]}`}
+          onClick={goChat}
+        >
+          {Locale.Auth.Confirm}
+        </button>
+        <button
+          className={styles["auth-action-button"]}
+          onClick={() => {
+            resetAccessCode();
+            goHome();
+          }}
+        >
+          {Locale.Auth.Later}
+        </button>
+      </div>
     </div>
   );
 }

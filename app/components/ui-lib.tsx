@@ -494,6 +494,8 @@ export function Selector<T>(props: {
       : [],
   );
 
+  const [search, setSearch] = useState("");
+
   const handleSelection = (e: MouseEvent, value: T) => {
     if (props.multiple) {
       e.stopPropagation();
@@ -509,49 +511,78 @@ export function Selector<T>(props: {
     }
   };
 
+  // Filter items based on search
+  const filteredItems = props.items.filter((item) => {
+    const searchLower = search.toLowerCase();
+    return (
+      item.title.toLowerCase().includes(searchLower) ||
+      (item.subTitle && item.subTitle.toLowerCase().includes(searchLower))
+    );
+  });
+
   return (
     <div className={styles["selector"]} onClick={() => props.onClose?.()}>
       <div className={styles["selector-content"]}>
+        {/* Search Bar */}
+        <div
+          className={styles["selector-search-bar"]}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <input
+            type="text"
+            placeholder="Search..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            autoFocus
+          />
+        </div>
         <List>
-          {props.items.map((item, i) => {
-            const selected = selectedValues.includes(item.value);
-            return (
-              <ListItem
-                className={clsx(styles["selector-item"], {
-                  [styles["selector-item-disabled"]]: item.disable,
-                })}
-                key={i}
-                title={item.title}
-                subTitle={item.subTitle}
-                icon={<Avatar model={item.value as string} />}
-                onClick={(e) => {
-                  if (item.disable) {
-                    e.stopPropagation();
-                  } else {
-                    handleSelection(e, item.value);
-                  }
-                }}
-              >
-                {selected ? (
-                  <div
-                    style={{
-                      height: 10,
-                      width: 10,
-                      backgroundColor: "var(--primary)",
-                      borderRadius: 10,
-                    }}
-                  ></div>
-                ) : (
-                  <></>
-                )}
-              </ListItem>
-            );
-          })}
+          {filteredItems.length === 0 ? (
+            <div style={{ padding: 24, textAlign: "center", color: "#888" }}>
+              No results found. Try a different search!
+            </div>
+          ) : (
+            filteredItems.map((item, i) => {
+              const selected = selectedValues.includes(item.value);
+              return (
+                <ListItem
+                  className={clsx(styles["selector-item"], {
+                    [styles["selector-item-disabled"]]: item.disable,
+                  })}
+                  key={i}
+                  title={item.title}
+                  subTitle={item.subTitle}
+                  icon={<Avatar model={item.value as string} />}
+                  onClick={(e) => {
+                    if (item.disable) {
+                      e.stopPropagation();
+                    } else {
+                      handleSelection(e, item.value);
+                    }
+                  }}
+                >
+                  {selected ? (
+                    <div
+                      style={{
+                        height: 10,
+                        width: 10,
+                        backgroundColor: "var(--primary)",
+                        borderRadius: 10,
+                      }}
+                    ></div>
+                  ) : (
+                    <></>
+                  )}
+                </ListItem>
+              );
+            })
+          )}
         </List>
       </div>
     </div>
   );
 }
+
 export function FullScreen(props: any) {
   const { children, right = 10, top = 10, ...rest } = props;
   const ref = useRef<HTMLDivElement>();

@@ -11,20 +11,48 @@ export async function requestOpenai(req: NextRequest) {
 
   const isAzure = req.nextUrl.pathname.includes("azure/deployments");
 
-  var authValue,
-    authHeaderName = "";
-  if (isAzure) {
-    authValue =
-      req.headers
-        .get("Authorization")
-        ?.trim()
-        .replaceAll("Bearer ", "")
-        .trim() ?? "";
+  // Original auth logic
+  // var authValue,
+  //   authHeaderName = "";
+  // if (isAzure) {
+  //   authValue =
+  //     req.headers
+  //       .get("Authorization")
+  //       ?.trim()
+  //       .replaceAll("Bearer ", "")
+  //       .trim() ?? "";
 
-    authHeaderName = "api-key";
+  //   authHeaderName = "api-key";
+  // } else {
+  //   authValue = req.headers.get("Authorization") ?? "";
+  //   authHeaderName = "Authorization";
+  // }
+
+  // Get DID headers from request (if exists)
+  const didFromRequest = req.headers.get("x-did");
+  const didSignatureFromRequest = req.headers.get("x-did-signature");
+  const didTimestampFromRequest = req.headers.get("x-did-timestamp");
+
+  // Build actual headers to send
+  let authHeaders: Record<string, string> = {};
+
+  // If request contains DID headers, use DID authentication
+  if (didFromRequest && didSignatureFromRequest && didTimestampFromRequest) {
+    console.log("[DID Auth] Using DID authentication from request");
+    authHeaders = {
+      "x-did": didFromRequest,
+      "x-did-signature": didSignatureFromRequest,
+      "x-did-timestamp": didTimestampFromRequest,
+    };
   } else {
-    authValue = req.headers.get("Authorization") ?? "";
-    authHeaderName = "Authorization";
+    // If no DID headers, use original Authorization authentication
+    const authHeader = req.headers.get("Authorization");
+    if (authHeader) {
+      console.log("[Traditional Auth] Using Authorization header");
+      authHeaders = {
+        Authorization: authHeader,
+      };
+    }
   }
 
   let path = `${req.nextUrl.pathname}`.replaceAll("/api/openai/", "");
@@ -94,7 +122,8 @@ export async function requestOpenai(req: NextRequest) {
     headers: {
       "Content-Type": "application/json",
       "Cache-Control": "no-store",
-      [authHeaderName]: authValue,
+      // [authHeaderName]: authValue,
+      ...authHeaders, // Use the authHeaders
       ...(serverConfig.openaiOrgId && {
         "OpenAI-Organization": serverConfig.openaiOrgId,
       }),
